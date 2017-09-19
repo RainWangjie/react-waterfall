@@ -1,7 +1,7 @@
 /**
  * Created by gewangjie on 2017/9/19
  */
-let React = require('react');
+import React from 'react';
 
 class Hello extends React.Component {
     constructor(props) {
@@ -13,4 +13,4 @@ class Hello extends React.Component {
     }
 }
 
-module.exports = Hello;
+export default Hello;
