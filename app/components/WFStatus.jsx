@@ -1,6 +1,7 @@
 /**
  * Created by gewangjie on 2017/9/19
  */
+import React from 'react';
 
 /*
  * 数据请求动画组件

@@ -1,0 +1,68 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 100vw;
+    overflow-x: hidden;
+}
+
+html {
+    font-family: sans-serif; /* 1 */
+    font-size: 14px;
+    line-height: 1.15; /* 2 */
+    -ms-text-size-adjust: 100%; /* 3 */
+    -webkit-text-size-adjust: 100%; /* 3 */
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Helvetica, "PingFang SC", "Helvetica Neue", Arial, "Microsoft Yahei", "SimHei", sans-serif;
+    height: auto !important;
+    overflow-x: hidden;
+    z-index: 0;
+}
+
+#content {
+    position: relative;
+    min-height: -webkit-calc(100vh);
+    min-height: calc(100vh);
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding-bottom: 10px;
+}
+
+.container {
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    position: relative;
+    margin: 0 auto;
+    min-width: 904px;
+    max-width: 1828px;
+}
+
+@media (min-width: 904px) and (max-width: 1212px) {
+    .container {
+        width: 904px;
+    }
+}
+
+@media (min-width: 1212px) and (max-width: 1520px) {
+    .container {
+        width: 1212px;
+    }
+}
+
+@media (min-width: 1520px) and (max-width: 1828px) {
+    .container {
+        width: 1520px;
+    }
+}
+
+@media (min-width: 1828px) {
+    .container {
+        width: 1828px;
+    }
+}
