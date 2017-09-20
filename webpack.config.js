@@ -21,15 +21,34 @@ module.exports = {
                 test: /\.(js|jsx)?$/,
                 exclude: /(node_modules)/,
                 loader: 'babel-loader',
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    {
+                        loader: "style-loader"
+                    }, {
+                        loader: "css-loader",
+                        options: {
+                            modules: true
+                        }
+                    }, {
+                        loader: "postcss-loader"
+                    }
+                ]
             }
         ]
     },
     plugins: [
-        new webpack.HotModuleReplacementPlugin()//热模块替换插件
+        require('autoprefixer'),
+        new webpack.HotModuleReplacementPlugin(),//热模块替换插件
+        new webpack.BannerPlugin('版权所有，翻版必究')
     ],
     devServer: {
         contentBase: path.join(__dirname, "build"),
         compress: true,
+        historyApiFallback: true,//不跳转
+        inline: true,//实时刷新
         port: 8080
     }
 };
