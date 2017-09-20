@@ -1,14 +1,22 @@
 /**
  * Created by gewangjie on 2017/9/19
  */
+import React from 'react';
 
+// 模拟数据
+const mockData = require('./mock.json');
+
+// 样式
+require('./waterFall.css');
+
+// 布局计算
 import LayoutCalc from '../utils/LayoutCalc'
 
 // 瀑布流单元块组件
 import {
     WFItem_1,
     WFItem_2
-} from './WFItem'
+} from './WFItem.jsx'
 
 // 瀑布流状态组件
 import {
@@ -16,11 +24,14 @@ import {
     Loading,
     ToBottom,
     NoResult
-} from 'WFStatus'
+} from './WFStatus.jsx'
 
-/*
- * 瀑布流
- */
+// 瀑布流辅助组件
+import {
+    ToTop
+} from './WFUtils.jsx'
+
+// 瀑布流
 class WaterFall extends React.Component {
     constructor(props) {
         super(props);
@@ -31,12 +42,12 @@ class WaterFall extends React.Component {
                 q: this.props.q || '', // 查询条件，搜索字段
                 pageSize: this.props.pageSize || 30, // 每次请求数据，默认30
             },
-            start: 0, // 后台记录使用
             page: 0, // 下一页
             totalPage: 0, // 翻页总页数
 
             columnNum: 0, // 列数
             columnWidth: this.props.columnWidth || 288, // 列宽
+
             initColumnHeight: this.props.initColumnHeight || [0], // 瀑布流初始高度
             index: 0, // 已添加数量
             waterFallData: [], // 瀑布流全部数据
@@ -48,7 +59,7 @@ class WaterFall extends React.Component {
             resultCount: 0, // 实际总数，精选操作会改变该值
 
             statusFlag: 1, // 瀑布流状态 ，1：初次加载，2：初次查询无结果，3：加载中，4：加载完成,等待滑动，5：加载完成,触底
-            wfType: this.props.wfType || 'blog', // 单元块类型
+            wfType: this.props.wfType || 'demo', // 单元块类型
 
             initContainerTop: 0, // 容器初始Top
             initContainerWidth: 0, // 容器初始width
@@ -98,8 +109,8 @@ class WaterFall extends React.Component {
     // 第一次渲染后调用
     componentDidMount() {
         // 置顶按钮消隐
-        this.renderToTop();
-        this.toTopShowHide();
+        // this.renderToTop();
+        // this.toTopShowHide();
 
         // 添加滚动事件，定时监听，获取初始top
         let pos = this.getContainerPos();
@@ -119,13 +130,11 @@ class WaterFall extends React.Component {
     // 每次渲染后调用
     componentDidUpdate() {
         // 单元数量变化才引起重新布局
-        // console.log(this.state.msnryCount, this.state.msnryCountOriginal);
         if (this.state.msnryCount === this.state.msnryCountOriginal) {
-            // console.log('单元数量未变化');
             return;
         }
 
-        /* 瀑布流配置 */
+        // 瀑布流配置
         if (this.state._firstMasonry) {
             console.log('首次布局');
             this.state._firstMasonry = false;
@@ -138,6 +147,7 @@ class WaterFall extends React.Component {
             // 重新计算列数
             this.calcWFItem(this.state.msnryCountOriginal, this.state.msnryCount);
         }
+
         this.state.msnryCountOriginal = this.state.msnryCount;
     }
 
@@ -157,17 +167,7 @@ class WaterFall extends React.Component {
         let self = this;
         // 初次获取数据
         self.getData((status) => {
-            // 配置参数，只请求一次
-            if (self.props.oneGetData) {
-                // 回调参数为4（可继续加载数据），强制修改瀑布流状态为结束
-                self.setState({
-                    statusFlag: status === 4 ? 5 : status
-                });
-                return;
-            }
-
-            // 开启下拉加载
-            self.state.loadType === 1 && self.startScroll();
+            self.startScroll();
         });
     }
 
@@ -260,96 +260,38 @@ class WaterFall extends React.Component {
     }
 
     // 请求数据
-    getData(callback, loop) {
+    getData(callback) {
+        let self = this;
+
         console.log('获取数据');
         // 触发渲染，显示loading
         this.state.statusFlag !== 1 && this.setState({
             statusFlag: 3
         });
-        let self = this,
-            _queryData = self.state.queryData;
 
-        _queryData.boundaryId = '';
-        // 分页数据必备，前一批数据最后一项的id，start开始项
-        if (self.state.page !== 0
-            && self.state.wfType !== 'owner'
-            && self.state.wfType !== 'insOwner') {
-            _queryData.boundaryId = self.state.waterFallData[self.state.waterFallTotal - 1].id
-        }
+        let result = JSON.stringify(mockData.result),
+            preData = self.dataPreProcessing(JSON.parse(result)),
+            _temp = self.state.waterFallData.concat(preData.data),
+            _waterFallTotal = self.state.waterFallTotal + preData.data.length,
+            _page = self.state.page + 1;
 
-        // 灵感页排序，首次请求增加decrease参数
-        if (self.state.page === 0 && self.state.wfType === 'index') {
-            _queryData.decrease = self.props.decrease || 0;
-        }
+        console.log(preData);
 
-        // 我的ins关注列表，增加pageSize参数
-        if (self.state.wfType === 'insOwner') {
-            _queryData.pageNo = self.state.page + 1;
-        }
+        self.setState({
+            waterFallData: _temp,
+            waterFallTotal: _waterFallTotal,
+            resultCount: _waterFallTotal,
+            page: _page,
+            showItemEnd: _waterFallTotal
+        }, () => {
+            callback && callback();
+            // 回调，数据请求成功
+            self.props.getDataSuccess && self.props.getDataSuccess(self.state);
+        });
 
-        // start为0，则赋0，非0则累加pageSize
-        _queryData.start = (self.state.page === 0 ? 0 : self.state.start + self.state.queryData.pageSize);
-
-        base.request({
-            url: base.baseUrl + self.props.dataUrl,
-            type: 'POST',
-            data: _queryData
-        }).done(function (d) {
-            let result = '',
-                _total = 0,
-                _status_flag = 4,
-                isComplete = false;// 数据完整性
-
-            // 防止后端不给数据
-            if (d.success && d.result) {
-                result = ('resultList' in d.result) ? d.result.resultList : d.result;
-                _total = result ? result.length : 0;
-                self.state.totalPage = d.result.totallPageCount || 0;
-            }
-
-            // 处理并存储数据
-            if (_total) {
-                // 准备数据
-                let preData = self.dataPreProcessing(result),
-                    _temp = self.state.waterFallData.concat(preData.data),
-                    _waterFallTotal = self.state.waterFallTotal + preData.data.length,
-                    _page = self.state.page + 1;
-
-                console.log(preData);
-
-                isComplete = preData.isComplete;
-                self.setState({
-                    waterFallData: _temp,
-                    waterFallTotal: _waterFallTotal,
-                    resultCount: d.result.resultCount || _waterFallTotal,
-                    page: _page,
-                    start: d.result.start,
-                    showItemEnd: _waterFallTotal
-                }, () => {
-                    // 回调，数据请求成功
-                    self.props.getDataSuccess && self.props.getDataSuccess(self.state);
-                })
-            }
-
-            // 返回数据为空 or 接口异常，数据异常
-            if (!isComplete) {
-                _status_flag = self.changeWFStatus(_status_flag);
-
-                // 数据加载完，or无数据 则移除滚动事件
-                self.removeScroll();
-            }
-
-            // 修改瀑布流状态
-            self.setState({
-                statusFlag: _status_flag,
-            }, () => {
-                // 等待加载过程,loop为true,则加载完全部数据，在精选集全选操作中使用
-                (loop && _status_flag === 4) ? self.getData(callback, loop)
-                    : (callback && callback(_status_flag));
-            });
-        }).fail(function () {
-            self.state.statusFlag = -1;
-            // alert('获取数据失败');
+        // 修改瀑布流状态
+        self.setState({
+            statusFlag: 4,
         });
     }
 
@@ -380,192 +322,19 @@ class WaterFall extends React.Component {
 
     // 数据预处理
     dataPreProcessing(data) {
-        let self = this,
-            newData = [],
-            _length = data.length,
-            item;
+        let self = this;
+        let newData = data.map((item) => {
+            item.wfItemType = 'image';
+            // 图片宽高自适应
+            let imgWH = self.preImgWH(item.width, item.height);
+            item.width = imgWH.width;
+            item.height = imgWH.height;
 
-        for (let i = 0; i < _length; i++) {
-            item = data[i];
-
-            // 额外数据填充，目前只有灵感页
-            let __key = i + self.state.waterFallTotal + '';
-            if (self.props.extraData && self.props.extraData.hasOwnProperty(__key)) {
-                let item = self.props.extraData[__key],
-                    {width, height} = self.preImgWH(item.width, item.height);
-                // 默认按照单列宽计算，*size列宽
-                item.width = width * item.size + 20 * (item.size - 1);
-                item.height = height * item.size;
-                newData.push(item);
-            }
-
-            // 足迹时间一个月，强制截断数据
-            if (self.state.historyEndFlag) {
-                break;
-            }
-
-            // 根据单元块类型处理数据
-            switch (self.state.wfType) {
-                case 'index':
-                case 'blog':
-                case 'folder':
-                case 'folderSelect':
-                case 'followBlog':
-                case 'folderShare':
-                case 'folderPublic':
-                case 'ownerId':
-                case 'history':
-                case 'classify':
-                case 'recommendBlog':
-                    // 足迹模块不包含足迹时间，跳出
-                    if (this.state.wfType === 'history' && !item.footprintTime) {
-                        break;
-                    }
-
-                    // 订阅模块不包含postTime，跳出
-                    if (this.state.wfType === 'followBlog' && !item.postTime) {
-                        break;
-                    }
-
-                    // 处理时间线
-                    if (self.props.timeLine) {
-                        let time;
-                        self.props.timeLine === 'history' && (time = item.footprintTime);
-                        self.props.timeLine === 'followBlog' && (time = item.postTime);
-
-                        let _timeTemp = base.dealTime(time);
-
-                        // 足迹事件超过一个月，截断
-                        if (self.state.wfType === 'history' && base.isMonth(self.state.todayTime, time)) {
-                            self.state.statusFlag =
-                                (self.state.waterFallTotal === 0 && newData.length === 0) ? 2 : 5;
-
-                            console.log('足迹数据截断');
-
-                            self.state.statusFlag === 5 && newData.push({
-                                isBlogCover: false,
-                                wfItemType: 'end'
-                            });
-
-                            self.state.historyEndFlag = true;
-                            break;
-                        }
-
-                        // 时间对比，插入时间轴
-                        if (self.state._time !== _timeTemp) {
-                            newData.push({
-                                wfItemType: `timeline`,
-                                postTime: time,
-                                isBlogCover: false,
-                                time: _timeTemp
-                            });
-                        }
-                        self.state._time = _timeTemp;
-                    }
-
-                    // 订阅模块，导入ins关系模块特殊处理
-                    if (this.state.wfType === 'followBlog'
-                        && i === 0
-                        && self.state.waterFallData.length === 0) {
-                        newData.push({
-                            wfItemType: `userInfo`,
-                            isBlogCover: false
-                        });
-                        // break;
-                    }
-
-                    // 订阅模块，秀场部分特殊处理
-                    if (this.state.wfType === 'followBlog' && item.platformId === 2) {
-                        newData.push({
-                            id: item.showId,
-                            designerId: item.designerId,
-                            showImgList: item.showImgList,
-                            city: item.city,
-                            season: item.season,
-                            designerName: item.designerName,
-                            wfItemType: platformList[2],
-                            postTime: item.postTime,
-                            isBlogCover: false
-                        });
-                        break;
-                    }
-
-                    // 异常数据跳出本次循环
-                    if (!item.width || !item.blogger) {
-                        break;
-                    }
-
-                    // 图片宽高自适应
-                    let imgWH = self.preImgWH(item.width, item.height);
-
-                    newData.push({
-                        id: item.id,
-                        mediaUrl: item.mediaUrl,
-                        width: imgWH.width,
-                        height: imgWH.height,
-                        postTime: item.postTime,
-                        bloggerId: item.blogger.id,
-                        nickname: item.blogger.nickname,
-                        headImg: item.blogger.headImg,
-                        averageHue: item.averageHue || '',
-                        favoriteId: item.favoriteId || 0,
-                        footprintTime: item.footprintTime || '',
-                        wfItemType: platformList[item.blogger.platformId + ''] || 'ins',
-                        shared: item.shared || 1
-                    });
-
-                    break;
-                case 'owner':
-                case 'insOwner':
-                case 'followOwner':
-                    // 非库内博主无ID，使用13位时间戳代替
-                    newData.push({
-                        id: item.id || new Date().getTime(),
-                        nickname: item.nickname,
-                        headImg: item.headImg,
-                        fansNum: item.fansNum,
-                        postNum: item.postNum,
-                        isVerified: item.isVerified || 0,
-                        followId: item.followId || 0,
-                        wfItemType: platformList[item.platformId + ''] || 'ins',
-                        source: item.source || 1,
-                        status: item.status || 1, // ins关注订阅状态
-                        intro: item.introduction || '', // 博主简介
-                        spiderStatus: item.hasOwnProperty('spiderStatus') ?
-                            item.spiderStatus : 8 // 爬虫状态，默认8，正常爬取
-                    });
-                    break;
-                case 'runwayDetail':
-                    if (!item.mediaUrl) {
-                        break;
-                    }
-
-                    // 换算新宽高
-                    let runwayImgWH = self.preImgWH(item.width, item.height);
-
-                    newData.push({
-                        id: item.id,
-                        mediaUrl: item.mediaUrl,
-                        width: runwayImgWH.width,
-                        height: runwayImgWH.height,
-                        averageHue: item.averageHue || '',
-                        showId: item.showId,
-                        wfItemType: 'runway'
-                    });
-
-                    break;
-            }
-        }
-
-        // 特殊处理，订阅页面，请求参数增加postTime
-        if (this.state.wfType === 'followBlog') {
-            let len = newData.length;
-            this.state.queryData.postTime = newData[len - 1].postTime;
-        }
+            return item
+        });
 
         return {
             data: newData,
-            // isComplete: data.length >= self.state.queryData.pageSize
             isComplete: data.length > 0
         };
     }
@@ -665,6 +434,12 @@ class WaterFall extends React.Component {
             }
         }
 
+        // 显示区间不变
+        if (this.state.showItemStart === showItemStart
+            && this.state.showItemEnd === showItemEnd) {
+            return;
+        }
+
         console.log('调整显示', showItemStart, showItemEnd);
 
         // 更新显示区间
@@ -673,17 +448,6 @@ class WaterFall extends React.Component {
             showItemEnd: showItemEnd
         }, () => {
             cb && cb();
-        })
-    }
-
-    // 开启下拉加载
-    startAutoLoad() {
-        console.log('开启下拉加载');
-        this.setState({
-            loadType: 1
-        }, function () {
-            this.startScroll();
-            this.getData();
         })
     }
 
@@ -776,21 +540,20 @@ class WaterFall extends React.Component {
 
         for (let i = _start; i < _end; i++) {
             let _key = `item_${i}`,
-                _data = self.state.waterFallData[i],
-                _id = _data.id;
+                _data = self.state.waterFallData[i];
 
             // 根据瀑布流单元块类型，选择相应组件
             switch (`${this.state.wfType}-${_data.wfItemType}`) {
                 // 默认
+                case 'demo-image':
+                    _list.push(<WFItem_1 wfType={self.state.wfType}
+                                         columnWidth={self.state.columnWidth}
+                                         key={_key}
+                                         data={_data}/>);
+                    break;
                 default:
-                    _list.push(<WFItemIns wfType={self.state.wfType}
-                                          handleClickImg={self.handleImg.bind(self, i, _id)}
-                                          handleSelectPop={self.handleSelectPop.bind(self, i, _id)}
-                                          isFolderBtn={self.state.isFolderBtn}
-                                          isCancelFolder={self.state.isCancelFolder}
-                                          columnWidth={self.state.columnWidth}
-                                          key={_key}
-                                          data={_data}/>);
+                    _list.push(null)
+
             }
         }
 
@@ -834,18 +597,21 @@ class WaterFall extends React.Component {
             status_html = this._renderWaterFallStatus(),
             _containerStyle = this.state.wfHeight === 0 ?
                 {} : {'height': `${this.state.wfHeight}px`};
-        return <div className="water-fall-container">
-            <div className="water-fall-tab">
-                {this.state.showResultCount &&
-                <div className="total-num-tab float-l">共{this.state.waterFallTotal}枚</div>}
+
+        return (
+            <div className="water-fall-container">
+                <div className="water-fall-tab">
+                    {this.state.showResultCount &&
+                    <div className="total-num-tab float-l">共{this.state.waterFallTotal}枚</div>}
+                </div>
+                <div className="clearfix"/>
+                {this.state.statusFlag === 1 && status_html}
+                <div id="container" ref="container" style={_containerStyle}>
+                    {column_html}
+                </div>
+                {this.state.statusFlag !== 1 && status_html}
             </div>
-            <div className="clearfix"/>
-            {this.state.statusFlag === 1 && status_html}
-            <div id="container" ref="container" style={_containerStyle}>
-                {column_html}
-            </div>
-            {this.state.statusFlag !== 1 && status_html}
-        </div>
+        )
     }
 
     // 视窗修改，resize

@@ -1,0 +1,63 @@
+/*初次加载*/
+.water-fall-loading {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.water-fall-loading img {
+    width: 40px;
+}
+
+/*瀑布流单元基础样式*/
+.water-fall-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 288px;
+    opacity: 0;
+    animation: itemShow .5s;
+    animation-fill-mode: forwards;
+    /*background: #FFFFFF;*/
+    margin-bottom: 20px;
+}
+
+.water-fall-item-img img {
+    vertical-align: top;
+    transition: opacity .3s;
+    animation: imgShow .1s;
+    animation-fill-mode: forwards;
+}
+
+/*hover阴影*/
+.water-fall-item.shadow:before {
+    content: '';
+    box-sizing: content-box;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: -10px;
+    padding: 10px;
+    opacity: 0;
+    background: rgba(0, 0, 0, .05);
+    border-radius: 8px;
+    transition: all .3s;
+    transform: scale(0.93);
+}
+
+.water-fall-item.shadow:hover:before {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/*动画*/
+@keyframes itemShow {
+    0%, 90% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+        transition: transform .2s;
+    }
+}
