@@ -1,3 +1,7 @@
+#container{
+    margin-top: 10px;
+}
+
 /*初次加载*/
 .water-fall-loading {
     text-align: center;
@@ -14,14 +18,36 @@
     top: 0;
     left: 0;
     width: 288px;
+    margin-bottom: 20px;
     opacity: 0;
     transition: transform .3s ease-in-out, opacity .3s .3s;
-    /*background: #FFFFFF;*/
-    margin-bottom: 20px;
+    background: #FFF;
+    border-radius: 3px;
+}
+
+.water-fall-item:hover .btn-del-item {
+    display: block;
+}
+
+.water-fall-item .btn-del-item {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 30px;
+    color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: rgba(0,0,0,.2);
+}
+
+.water-fall-item .btn-del-item-2 {
+    top: 50px;
 }
 
 .water-fall-item.text {
-    border:1px solid #ccc;
+    border: 1px solid #ccc;
     padding: 20px 10px;
     font-size: 20px;
     color: #4845f1;
@@ -32,6 +58,7 @@
     transition: opacity .3s;
     animation: imgShow .1s;
     animation-fill-mode: forwards;
+    border-radius: 3px;
 }
 
 /*hover阴影*/

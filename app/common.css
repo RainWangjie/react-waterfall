@@ -25,6 +25,10 @@ body {
     z-index: 0;
 }
 
+button{
+    cursor: pointer;
+}
+
 #content {
     position: relative;
     min-height: -webkit-calc(100vh);
