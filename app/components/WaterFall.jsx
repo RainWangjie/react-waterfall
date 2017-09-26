@@ -246,9 +246,10 @@ class WaterFall extends React.Component {
                 h = item.nodeHeight;
             }
 
-            let {x, y} = this.layoutCalc.calc(w, h);
+            let {x, y, colIndex} = this.layoutCalc.calc(w, h);
             item.translateX = x;
             item.translateY = y;
+            item.colIndex = colIndex;
         }
 
         this.setState({
@@ -265,12 +266,13 @@ class WaterFall extends React.Component {
         let self = this;
 
         console.log('获取数据');
+
         // 触发渲染，显示loading
         this.state.statusFlag !== 1 && this.setState({
             statusFlag: 3
         });
 
-        let result = JSON.stringify(mockData.result),
+        let result = JSON.stringify(mockData.result), // 深拷贝数据
             preData = self.dataPreProcessing(JSON.parse(result)),
             _temp = self.state.waterFallData.concat(preData.data),
             _waterFallTotal = self.state.waterFallTotal + preData.data.length,
@@ -325,7 +327,7 @@ class WaterFall extends React.Component {
     dataPreProcessing(data) {
         let self = this;
         let newData = data.map((item) => {
-            item.id=base.getRandomId();
+            item.id = base.getRandomId();
 
             if (item.text) {
                 item.wfItemType = 'text';
@@ -458,6 +460,77 @@ class WaterFall extends React.Component {
         })
     }
 
+    // 单列动画优化
+    executeSingleAni(start, colIndex, height) {
+        let list = this.state.waterFallData;
+        // 跳过第一个
+        start++;
+        for (; start < this.state.waterFallTotal - 1; start++) {
+            let item = list[start],
+                itemColIndex = item.colIndex;
+
+            if (itemColIndex !== colIndex) {
+                console.log('跳出本次循环');
+                continue;
+            }
+
+            // 遇到非单列元素，停止修改之后的元素
+            if (itemColIndex === -1) {
+                console.log('跳出循环');
+                break;
+            }
+
+            // 同列元素修改pos
+            item.translateY += height;
+        }
+
+        // 更新列高
+        this.layoutCalc.updateColHeight(colIndex, height);
+
+        return list;
+    }
+
+    // 更新单个模块的宽高
+    updateSingleHeight(index, height) {
+        let item = this.state.waterFallData[index],
+            list = this.executeSingleAni(index, item.colIndex, height);
+        item.nodeHeight += height;
+
+        this.setState({
+            waterFallData: list
+        })
+    }
+
+    delItemExecute(index) {
+        let item = this.state.waterFallData[index],
+            list = this.executeSingleAni(index, item.colIndex, item.nodeHeight * -1);
+
+        // 删除该元素
+        list.splice(index, 1);
+
+        this.setState({
+            waterFallData: list,
+            waterFallTotal: list.length
+        })
+    }
+
+    delItem(index) {
+        let _list = this.state.waterFallData;
+        _list.splice(index, 1);
+
+        // 强制更新瀑布流数据
+        this.state.waterFallData = _list;
+        this.state.waterFallTotal = _list.length;
+
+        // 重新计算布局
+        this._resetLayout(this.state.columnNum);
+        this.calcWFItem(0, _list.length);
+
+        this.setState({
+            statusFlag: _list.length === 0 ? 2 : 4,
+        });
+    }
+
     // 置顶按钮消隐
     toTopShowHide() {
         let self = this;
@@ -546,8 +619,8 @@ class WaterFall extends React.Component {
         console.log('组装单元', _start, _end);
 
         for (let i = _start; i < _end; i++) {
-            let _key = `item_${i}`, // 最好用id，不用索引i
-                _data = self.state.waterFallData[i];
+            let _data = self.state.waterFallData[i],
+                _key = `item_${_data.id}`;
 
             // 根据瀑布流单元块类型，选择相应组件
             switch (`${this.state.wfType}-${_data.wfItemType}`) {
@@ -555,6 +628,8 @@ class WaterFall extends React.Component {
                 case 'demo-image':
                     _list.push(<WFItem_1 wfType={self.state.wfType}
                                          columnWidth={self.state.columnWidth}
+                                         delItem={self.delItem.bind(self, i)}
+                                         delItemExecute={self.delItemExecute.bind(self, i)}
                                          key={_key}
                                          data={_data}/>);
                     break;

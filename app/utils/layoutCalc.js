@@ -39,19 +39,20 @@ class LayoutCalc {
 
     // 计算下一个,返回坐标
     calc(w, h) {
-        let x, y,
+        let x, y, colIndex = 0,// 列索引
             col = Math.floor(w / this.options.columnWidth);
 
         // 单列元素
         if (col === 1) {
-            let minH = Math.min.apply(null, this.options.columnHeight),
-                index = this.options.columnHeight.indexOf(minH);
+            let minH = Math.min.apply(null, this.options.columnHeight);
+
+            colIndex = this.options.columnHeight.indexOf(minH);
             // 计算新值
-            x = index * (this.options.columnWidth + this.options.gutter);
+            x = colIndex * (this.options.columnWidth + this.options.gutter);
             y = minH;
 
             // 更新列高
-            this.options.columnHeight[index] = y + h;
+            this.options.columnHeight[colIndex] = y + h;
         }
 
         // 2列元素
@@ -64,6 +65,7 @@ class LayoutCalc {
                     y = h1;
                     this.options.columnHeight[i] = y + h;
                     this.options.columnHeight[i + 1] = y + h;
+                    colIndex = -1;
                     break;
                 }
             }
@@ -77,6 +79,7 @@ class LayoutCalc {
             // 计算新值
             x = 0;
             y = maxH;
+            colIndex = -1;
 
             // 更新列高,所有列高均为maxH + h
             for (let i = 0; i < this.options.columnNum; i++) {
@@ -84,7 +87,7 @@ class LayoutCalc {
             }
         }
 
-        return {x, y}
+        return {x, y, colIndex}
     }
 
     getElWH(el) {
@@ -105,6 +108,11 @@ class LayoutCalc {
 
     dealNum(num) {
         return num.replace('px', '') * 1;
+    }
+
+    // 更新列高
+    updateColHeight(col, num) {
+        this.options.columnHeight[col] += num;
     }
 
     // 获取最大height

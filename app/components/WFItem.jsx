@@ -8,6 +8,14 @@ class WFItem_1 extends React.Component {
         super(props);
     }
 
+    delItem_1() {
+        this.props.delItem();
+    }
+
+    delItem_2() {
+        this.props.delItemExecute();
+    }
+
     render() {
         let data = this.props.data,
             _wfItemStyle = base.setDivStyle(data);
@@ -18,6 +26,12 @@ class WFItem_1 extends React.Component {
                     <LoadImage src={data.mediaUrl}
                                bgColor={data.averageHue}
                                width={data.width} height={data.height} aliWidth={this.props.columnWidth}/>
+                    <button className="btn-del-item btn-del-item-1"
+                            onClick={this.delItem_1.bind(this)}>X-1
+                    </button>
+                    <button className="btn-del-item btn-del-item-2"
+                            onClick={this.delItem_2.bind(this)}>X-2
+                    </button>
                 </div>
             </div>
         );
