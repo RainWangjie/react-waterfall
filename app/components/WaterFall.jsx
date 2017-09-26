@@ -30,6 +30,7 @@ import {
 import {
     ToTop
 } from './WFUtils.jsx'
+import base from "../common";
 
 // 瀑布流
 class WaterFall extends React.Component {
@@ -324,6 +325,12 @@ class WaterFall extends React.Component {
     dataPreProcessing(data) {
         let self = this;
         let newData = data.map((item) => {
+            item.id=base.getRandomId();
+
+            if (item.text) {
+                item.wfItemType = 'text';
+                return item;
+            }
             item.wfItemType = 'image';
             // 图片宽高自适应
             let imgWH = self.preImgWH(item.width, item.height);
@@ -539,7 +546,7 @@ class WaterFall extends React.Component {
         console.log('组装单元', _start, _end);
 
         for (let i = _start; i < _end; i++) {
-            let _key = `item_${i}`,
+            let _key = `item_${i}`, // 最好用id，不用索引i
                 _data = self.state.waterFallData[i];
 
             // 根据瀑布流单元块类型，选择相应组件
@@ -547,6 +554,12 @@ class WaterFall extends React.Component {
                 // 默认
                 case 'demo-image':
                     _list.push(<WFItem_1 wfType={self.state.wfType}
+                                         columnWidth={self.state.columnWidth}
+                                         key={_key}
+                                         data={_data}/>);
+                    break;
+                case 'demo-text':
+                    _list.push(<WFItem_2 wfType={self.state.wfType}
                                          columnWidth={self.state.columnWidth}
                                          key={_key}
                                          data={_data}/>);
