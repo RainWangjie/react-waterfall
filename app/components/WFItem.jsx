@@ -25,8 +25,19 @@ class WFItem_1 extends React.Component {
 }
 
 class WFItem_2 extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
     render() {
-        return null
+        let data = this.props.data,
+            _wfItemStyle = base.setDivStyle(data);
+        return (
+            <div className='water-fall-item text shadow'
+                 style={_wfItemStyle}>
+                {data.text}
+            </div>
+        );
     }
 }
 

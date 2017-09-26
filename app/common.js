@@ -17,9 +17,11 @@ let base = {
         }
         let x = data.translateX || 0,
             y = data.translateY || 0;
+
         return {
+            'opacity': 1,
             'transform': `translate(${x}px,${y}px)`,
-            'WebkitTransform': `translate(${x}px,${y}px)`
+            'WebkitTransform': `translateX(${x}px) translateY(${y}px)`
         }
     },
 
@@ -40,6 +42,11 @@ let base = {
         let _w = w ? `/resize,w_${Math.floor(w * 1 * (window.devicePixelRatio || 1))}` : '',
             _c = '/format,jpg/interlace,1';
         return `${src}?x-oss-process=image${_w}${_c}`;
+    },
+
+    // 获取随机Id
+    getRandomId() {
+        return `${new Date().getTime()}${Math.random().toString().substr(2, 6)}`
     }
 };
 
