@@ -27,10 +27,10 @@ class WFItem_1 extends React.Component {
                                bgColor={data.averageHue}
                                width={data.width} height={data.height} aliWidth={this.props.columnWidth}/>
                     <button className="btn-del-item btn-del-item-1"
-                            onClick={this.delItem_1.bind(this)}>X-1
+                            onClick={this.delItem_1.bind(this)}>X-动画1
                     </button>
                     <button className="btn-del-item btn-del-item-2"
-                            onClick={this.delItem_2.bind(this)}>X-2
+                            onClick={this.delItem_2.bind(this)}>X-动画2
                     </button>
                 </div>
             </div>
