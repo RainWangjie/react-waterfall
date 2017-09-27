@@ -31,6 +31,7 @@ class WFItem_1 extends React.Component {
                     </button>
                     <button className="btn-del-item btn-del-item-2"
                             onClick={this.delItem_2.bind(this)}>X-动画2
+
                     </button>
                 </div>
             </div>

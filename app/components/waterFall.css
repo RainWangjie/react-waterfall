@@ -1,6 +1,8 @@
+
 #container {
     margin-top: 10px;
     transform: translateZ(0);
+
 }
 
 /*初次加载*/
@@ -42,6 +44,7 @@
     border: 1px solid #ccc;
     border-radius: 3px;
     background: rgba(0, 0, 0, .2);
+
 }
 
 .water-fall-item .btn-del-item-2 {
