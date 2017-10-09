@@ -60,9 +60,6 @@
 
 .water-fall-item-img img {
     vertical-align: top;
-    transition: opacity .3s;
-    animation: imgShow .1s;
-    animation-fill-mode: forwards;
     border-radius: 3px;
 }
 

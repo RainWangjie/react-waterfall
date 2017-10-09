@@ -20,8 +20,8 @@ let base = {
 
         return {
             'opacity': 1,
-            'transform': `translate(${x}px,${y}px)`,
-            'WebkitTransform': `translateX(${x}px) translateY(${y}px)`
+            'transform': `translateX(${x}px) translateY(${y}px) translateZ(0)`,
+            'WebkitTransform': `translateX(${x}px) translateY(${y}px) translateZ(0)`
         }
     },
 

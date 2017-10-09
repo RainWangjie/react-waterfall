@@ -177,11 +177,15 @@ class WaterFall extends React.Component {
         this.layoutCalc = new LayoutCalc({
             columnWidth: this.state.columnWidth,
             itemSelector: '.water-fall-item',    // 要布局的网格元素
-            gutter: this.state.columnWidth === 288 ? 20 : 10,
+            gutter: this.getGutter(),
             columnNum: columnNum,
             initColumnHeight: this.state.initColumnHeight,
             columnHeight: new Array(columnNum).fill(0), // 列高默认0
         });
+    }
+
+    getGutter() {
+        return this.state.columnWidth === 288 ? 20 : 10
     }
 
     // 重置布局模块
@@ -195,7 +199,7 @@ class WaterFall extends React.Component {
         this.layoutCalc.reset({
             columnWidth: this.state.columnWidth,
             itemSelector: '.water-fall-item',    // 要布局的网格元素
-            gutter: this.state.columnWidth === 288 ? 20 : 10,
+            gutter: this.gutter(),
             columnNum: columnNum,
             initColumnHeight: this.state.initColumnHeight,
             columnHeight: new Array(columnNum).fill(0), // 列高
@@ -246,7 +250,7 @@ class WaterFall extends React.Component {
                 h = item.nodeHeight;
             }
 
-            let {x, y, colIndex} = this.layoutCalc.calc(w, h);
+            let { x, y, colIndex } = this.layoutCalc.calc(w, h);
             item.translateX = x;
             item.translateY = y;
             item.colIndex = colIndex;
@@ -375,7 +379,7 @@ class WaterFall extends React.Component {
 
         this.state.containerTimeStamp = 0;
 
-        let {w, t} = this.getContainerPos(),
+        let { w, t } = this.getContainerPos(),
             scrollTop = this.state.initContainerTop - t;
 
         // console.log(w, scrollTop, t);
@@ -428,20 +432,35 @@ class WaterFall extends React.Component {
     // 计算显示区间
     _calcShowItem(cb) {
         let calcWFData = this.state.waterFallData,
-            currentScrollTop = this.state.scrollTop,
-            sentryScrollTop = Math.max(currentScrollTop - 2500 - this.state.initContainerTop, 0),
             len = calcWFData.length,
-            showItemStart = 0,
-            showItemEnd = 0;
+            maxNum = this.state.queryData.pageSize * 3;
 
-        for (let i = 0; i < len; i++) {
-            let item = calcWFData[i];
-            if (item.translateY >= sentryScrollTop) {
-                showItemStart = i;
-                showItemEnd = Math.min(len, showItemStart + this.state.queryData.pageSize * 3);
-                break;
-            }
+        // 分页器模式跳出
+        if (this.state.loadType === 2) {
+            return;
         }
+
+        // 节点数少于指定数，不执行显示区间调整（数量少），提升性能
+        if (len < maxNum) {
+            return;
+        }
+
+        let currentScrollTop = this.state.scrollTop,
+            sentryScrollTop = Math.max(currentScrollTop - 2500 - this.state.initContainerTop, 0);
+
+        // 根据当前滚动高度预估开始项，非从第0项开始循环查找
+        let showItemStart = this._calcStartItem(sentryScrollTop),
+            showItemEnd = Math.min(len, showItemStart + maxNum);
+
+        // 循环查找起始项
+        // for (let i = 0; i < len; i++) {
+        //     let item = calcWFData[i];
+        //     if (item.translateY >= sentryScrollTop) {
+        //         showItemStart = i;
+        //         showItemEnd = Math.min(len, showItemStart + maxNum);
+        //         break;
+        //     }
+        // }
 
         // 显示区间不变
         if (this.state.showItemStart === showItemStart
@@ -458,6 +477,40 @@ class WaterFall extends React.Component {
         }, () => {
             cb && cb();
         })
+    }
+
+    // 预估显示区间调整开始项
+    _calcStartItem(sentryScrollTop) {
+        let calcWFData = this.state.waterFallData,
+            len = calcWFData.length,
+            maxNum = this.state.queryData.pageSize * 3,
+            itemHeight = this.state.columnWidth + this.getGutter(),// 假设单元块都为矩形
+            showItemStart = Math.floor(sentryScrollTop / itemHeight) * this.state.columnNum, // 预算当前项
+            flag = calcWFData[showItemStart].translateY >= sentryScrollTop, // 检测当前项是否满足
+            findItem = () => {
+                if (showItemStart <= 0) {
+                    return 0;
+                }
+
+                if (showItemStart >= len) {
+                    return Math.max(len - maxNum, 0);
+                }
+
+                // 根据当前项前后浮动列数单位继续查找
+                console.log(flag, '滚动高度', sentryScrollTop, showItemStart);
+                showItemStart += this.state.columnNum * (flag ? -1 : 1);
+
+                console.log('查找', showItemStart, calcWFData[showItemStart].translateY);
+
+                if ((calcWFData[showItemStart].translateY >= sentryScrollTop) ^ flag) {
+                    return showItemStart
+                } else {
+                    return findItem();
+                }
+
+            };
+
+        return findItem();
     }
 
     // 单列动画优化
@@ -539,7 +592,7 @@ class WaterFall extends React.Component {
             // 置顶按钮消隐
             scrollTop > 300 !== self.state.toTop && (self.state.toTop = (scrollTop > 300));
             ReactDOM.render(<ToTop show={self.state.toTop}
-                                   toTop={self.toTop.bind(self)}/>, document.getElementById('btn-to-top'));
+                toTop={self.toTop.bind(self)} />, document.getElementById('btn-to-top'));
         });
     }
 
@@ -570,7 +623,7 @@ class WaterFall extends React.Component {
         } else {
             parentEl.appendChild(toTopEl);
         }
-        ReactDOM.render(<ToTop show={this.state.toTop} toTop={this.toTop.bind(this)}/>,
+        ReactDOM.render(<ToTop show={this.state.toTop} toTop={this.toTop.bind(this)} />,
             document.getElementById('btn-to-top'));
     }
 
@@ -627,17 +680,17 @@ class WaterFall extends React.Component {
                 // 默认
                 case 'demo-image':
                     _list.push(<WFItem_1 wfType={self.state.wfType}
-                                         columnWidth={self.state.columnWidth}
-                                         delItem={self.delItem.bind(self, i)}
-                                         delItemExecute={self.delItemExecute.bind(self, i)}
-                                         key={_key}
-                                         data={_data}/>);
+                        columnWidth={self.state.columnWidth}
+                        delItem={self.delItem.bind(self, i)}
+                        delItemExecute={self.delItemExecute.bind(self, i)}
+                        key={_key}
+                        data={_data} />);
                     break;
                 case 'demo-text':
                     _list.push(<WFItem_2 wfType={self.state.wfType}
-                                         columnWidth={self.state.columnWidth}
-                                         key={_key}
-                                         data={_data}/>);
+                        columnWidth={self.state.columnWidth}
+                        key={_key}
+                        data={_data} />);
                     break;
                 default:
                     _list.push(null)
@@ -656,22 +709,22 @@ class WaterFall extends React.Component {
         let html = '';
         switch (this.state.statusFlag) {
             case 1:
-                html = <GetData/>;
+                html = <GetData />;
                 break;
             case 2:
                 html = <NoResult wfType={this.state.wfType}
-                                 noResultTip={this.props.noResultTip}
-                                 columnNum={this.state.columnNum}
-                                 q={this.state.queryData.q}/>;
+                    noResultTip={this.props.noResultTip}
+                    columnNum={this.state.columnNum}
+                    q={this.state.queryData.q} />;
                 break;
             case 3:
-                html = <Loading/>;
+                html = <Loading />;
                 break;
             case 4:
                 html = '';
                 break;
             case 5:
-                html = this.state.noBottom ? '' : <ToBottom wfType={this.state.wfType}/>;
+                html = this.state.noBottom ? '' : <ToBottom wfType={this.state.wfType} />;
                 break;
             case -1:
             default:
@@ -684,15 +737,15 @@ class WaterFall extends React.Component {
         let column_html = this.state.statusFlag === 2 ? '' : this._renderWaterFallItem(),
             status_html = this._renderWaterFallStatus(),
             _containerStyle = this.state.wfHeight === 0 ?
-                {} : {'height': `${this.state.wfHeight}px`};
+                {} : { 'height': `${this.state.wfHeight}px` };
 
         return (
             <div className="water-fall-container">
                 <div className="water-fall-tab">
                     {this.state.showResultCount &&
-                    <div className="total-num-tab float-l">共{this.state.waterFallTotal}枚</div>}
+                        <div className="total-num-tab float-l">共{this.state.waterFallTotal}枚</div>}
                 </div>
-                <div className="clearfix"/>
+                <div className="clearfix" />
                 {this.state.statusFlag === 1 && status_html}
                 <div id="container" ref="container" style={_containerStyle}>
                     {column_html}
