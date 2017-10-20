@@ -199,7 +199,7 @@ class WaterFall extends React.Component {
         this.layoutCalc.reset({
             columnWidth: this.state.columnWidth,
             itemSelector: '.water-fall-item',    // 要布局的网格元素
-            gutter: this.gutter(),
+            gutter: this.getGutter(),
             columnNum: columnNum,
             initColumnHeight: this.state.initColumnHeight,
             columnHeight: new Array(columnNum).fill(0), // 列高
