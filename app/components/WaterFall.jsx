@@ -449,7 +449,7 @@ class WaterFall extends React.Component {
             sentryScrollTop = Math.max(currentScrollTop - 2500 - this.state.initContainerTop, 0);
 
         // 根据当前滚动高度预估开始项，非从第0项开始循环查找
-        let showItemStart = this._calcStartItem(sentryScrollTop),
+        let showItemStart = this.estimateStartItem(sentryScrollTop),
             showItemEnd = Math.min(len, showItemStart + maxNum);
 
         // 循环查找起始项
@@ -480,12 +480,12 @@ class WaterFall extends React.Component {
     }
 
     // 预估显示区间调整开始项
-    _calcStartItem(sentryScrollTop) {
+    estimateStartItem(sentryScrollTop) {
         let calcWFData = this.state.waterFallData,
             len = calcWFData.length,
             maxNum = this.state.queryData.pageSize * 3,
-            itemHeight = this.state.columnWidth + this.getGutter(),// 假设单元块都为矩形
-            showItemStart = Math.floor(sentryScrollTop / itemHeight) * this.state.columnNum, // 预算当前项
+            scale = (sentryScrollTop / this.state.wfHeight).toFixed(4), //高度占比
+            showItemStart = Math.floor(scale * this.state.waterFallTotal), // 预算当前项
             flag = calcWFData[showItemStart].translateY >= sentryScrollTop, // 检测当前项是否满足
             findItem = () => {
                 if (showItemStart <= 0) {
