@@ -95,6 +95,7 @@ class LayoutCalc {
         let w = el.offsetWidth,
             h = el.offsetHeight;
 
+        // 设置盒模型，不需要累加padding、border
         let elStyle = window.getComputedStyle(el),
             paddingTop = this.dealNum(elStyle.paddingTop),
             paddingBottom = this.dealNum(elStyle.paddingBottom),

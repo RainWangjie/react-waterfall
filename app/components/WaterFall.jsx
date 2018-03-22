@@ -230,16 +230,23 @@ class WaterFall extends React.Component {
 
     // 计算单元块translate
     calcWFItem(start, end) {
-        let _list = this.state.waterFallData;
+        let _list = this.state.waterFallData,
+            waterFallElList = this.refs.container.getElementsByClassName('water-fall-item'),
+            waterFallElTotal = waterFallElList.length;
 
         console.log('计算区间', start, end);
 
         for (let i = start; i < end; i++) {
             let item = _list[i], w, h;
 
+            // 获取不到节点则跳出
+            if (i >= waterFallElList) {
+                break;
+            }
+
             // 计算该节点宽高
             if (!item.nodeWidth) {
-                let el = this.refs.container.getElementsByClassName('water-fall-item')[i - this.state.showItemStart],
+                let el = waterFallElList[i - this.state.showItemStart],
                     node = this.layoutCalc.getElWH(el);
                 w = node.w === this.state.initContainerWidth ? -1 : node.w;
                 h = node.h;
@@ -250,7 +257,7 @@ class WaterFall extends React.Component {
                 h = item.nodeHeight;
             }
 
-            let { x, y, colIndex } = this.layoutCalc.calc(w, h);
+            let {x, y, colIndex} = this.layoutCalc.calc(w, h);
             item.translateX = x;
             item.translateY = y;
             item.colIndex = colIndex;
@@ -379,7 +386,7 @@ class WaterFall extends React.Component {
 
         this.state.containerTimeStamp = 0;
 
-        let { w, t } = this.getContainerPos(),
+        let {w, t} = this.getContainerPos(),
             scrollTop = this.state.initContainerTop - t;
 
         // console.log(w, scrollTop, t);
@@ -592,7 +599,7 @@ class WaterFall extends React.Component {
             // 置顶按钮消隐
             scrollTop > 300 !== self.state.toTop && (self.state.toTop = (scrollTop > 300));
             ReactDOM.render(<ToTop show={self.state.toTop}
-                toTop={self.toTop.bind(self)} />, document.getElementById('btn-to-top'));
+                                   toTop={self.toTop.bind(self)}/>, document.getElementById('btn-to-top'));
         });
     }
 
@@ -623,7 +630,7 @@ class WaterFall extends React.Component {
         } else {
             parentEl.appendChild(toTopEl);
         }
-        ReactDOM.render(<ToTop show={this.state.toTop} toTop={this.toTop.bind(this)} />,
+        ReactDOM.render(<ToTop show={this.state.toTop} toTop={this.toTop.bind(this)}/>,
             document.getElementById('btn-to-top'));
     }
 
@@ -680,17 +687,17 @@ class WaterFall extends React.Component {
                 // 默认
                 case 'demo-image':
                     _list.push(<WFItem_1 wfType={self.state.wfType}
-                        columnWidth={self.state.columnWidth}
-                        delItem={self.delItem.bind(self, i)}
-                        delItemExecute={self.delItemExecute.bind(self, i)}
-                        key={_key}
-                        data={_data} />);
+                                         columnWidth={self.state.columnWidth}
+                                         delItem={self.delItem.bind(self, i)}
+                                         delItemExecute={self.delItemExecute.bind(self, i)}
+                                         key={_key}
+                                         data={_data}/>);
                     break;
                 case 'demo-text':
                     _list.push(<WFItem_2 wfType={self.state.wfType}
-                        columnWidth={self.state.columnWidth}
-                        key={_key}
-                        data={_data} />);
+                                         columnWidth={self.state.columnWidth}
+                                         key={_key}
+                                         data={_data}/>);
                     break;
                 default:
                     _list.push(null)
@@ -709,22 +716,22 @@ class WaterFall extends React.Component {
         let html = '';
         switch (this.state.statusFlag) {
             case 1:
-                html = <GetData />;
+                html = <GetData/>;
                 break;
             case 2:
                 html = <NoResult wfType={this.state.wfType}
-                    noResultTip={this.props.noResultTip}
-                    columnNum={this.state.columnNum}
-                    q={this.state.queryData.q} />;
+                                 noResultTip={this.props.noResultTip}
+                                 columnNum={this.state.columnNum}
+                                 q={this.state.queryData.q}/>;
                 break;
             case 3:
-                html = <Loading />;
+                html = <Loading/>;
                 break;
             case 4:
                 html = '';
                 break;
             case 5:
-                html = this.state.noBottom ? '' : <ToBottom wfType={this.state.wfType} />;
+                html = this.state.noBottom ? '' : <ToBottom wfType={this.state.wfType}/>;
                 break;
             case -1:
             default:
@@ -737,15 +744,15 @@ class WaterFall extends React.Component {
         let column_html = this.state.statusFlag === 2 ? '' : this._renderWaterFallItem(),
             status_html = this._renderWaterFallStatus(),
             _containerStyle = this.state.wfHeight === 0 ?
-                {} : { 'height': `${this.state.wfHeight}px` };
+                {} : {'height': `${this.state.wfHeight}px`};
 
         return (
             <div className="water-fall-container">
                 <div className="water-fall-tab">
                     {this.state.showResultCount &&
-                        <div className="total-num-tab float-l">共{this.state.waterFallTotal}枚</div>}
+                    <div className="total-num-tab float-l">共{this.state.waterFallTotal}枚</div>}
                 </div>
-                <div className="clearfix" />
+                <div className="clearfix"/>
                 {this.state.statusFlag === 1 && status_html}
                 <div id="container" ref="container" style={_containerStyle}>
                     {column_html}
