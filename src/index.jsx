@@ -6,9 +6,6 @@ import ReactDOM from 'react-dom';
 // import Hello from './components/Hello.jsx';
 import WaterFall from './components/WaterFall.jsx';
 
-require('./common.css');
+import './common.css';
 
-ReactDOM.render(
-    <WaterFall/>,
-    document.getElementById('content')
-);
+ReactDOM.render(<WaterFall />, document.getElementById('content'));
